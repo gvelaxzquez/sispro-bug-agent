@@ -22,11 +22,12 @@ if ! awk "BEGIN{exit !($tiempo > 0)}"; then
   exit 1
 fi
 
-body=$(jq -n \
-  --argjson idActividad "$id_actividad" \
-  --argjson tiempo "$tiempo" \
-  --arg comentario "$comentario" \
-  '{IdActividad: $idActividad, Tiempo: $tiempo, Comentario: $comentario}')
+json_escape() {
+  # Escapa backslash y comillas dobles para meter el string en un literal JSON.
+  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+body="{\"IdActividad\": $id_actividad, \"Tiempo\": $tiempo, \"Comentario\": \"$(json_escape "$comentario")\"}"
 
 http_code=$(curl -sS -o /tmp/sispro-report-time.$$.json -w '%{http_code}' \
   -X POST \

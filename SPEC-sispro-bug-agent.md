@@ -30,7 +30,7 @@ sispro-bug-agent/
 └── LICENSE
 ```
 
-Los `.sh` son wrappers delgados (curl + jq), no un cliente completo — la logica de negocio (preguntas, plan, gates) vive en `SKILL.md`, ejecutada por Claude, no por codigo.
+Los `.sh` son wrappers delgados (curl puro, JSON armado a mano para no depender de `jq`), no un cliente completo — la logica de negocio (preguntas, plan, gates) vive en `SKILL.md`, ejecutada por Claude, no por codigo.
 
 ## Configuracion / credenciales
 
@@ -78,7 +78,7 @@ Repo de un solo plugin → **no necesita `marketplace.json`**, solo `.claude-plu
 }
 ```
 
-`name`/`description` son los unicos campos obligatorios; el resto habilita el flujo de update por version (ver Distribucion). Sin dependencias externas mas alla de curl + jq (instrucciones de instalacion en README para Windows/Git Bash).
+`name`/`description` son los unicos campos obligatorios; el resto habilita el flujo de update por version (ver Distribucion). Sin dependencias externas mas alla de curl (Git Bash en Windows ya trae curl; jq NO se usa, se descarto durante implementacion por no venir preinstalado en Git Bash).
 
 ## Distribucion (proceso para subirlo y compartirlo)
 

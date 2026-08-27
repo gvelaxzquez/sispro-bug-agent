@@ -9,7 +9,7 @@ Ver `SPEC-sispro-bug-agent.md` para el diseno completo.
 
 ## Instalacion (equipo)
 
-Requiere `curl`, `jq` y `git`/`gh` con credenciales ya configuradas. En
+Requiere `curl` y `git`/`gh` con credenciales ya configuradas. En
 Windows, usa Git Bash (el shell de este entorno).
 
 ```
