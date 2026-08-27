@@ -110,8 +110,8 @@ Repo de un solo plugin → **no necesita `marketplace.json`**, solo `.claude-plu
 - [x] `config/sispro.env.example`
 - [x] `README.md` (instalacion, generacion de API key, uso, troubleshooting 401/403/409, proceso de distribucion/update de la seccion anterior)
 - [x] `.gitignore` (`.env`, `config/sispro.env`)
-- [ ] Prueba manual end-to-end contra SISPRO local (`http://localhost:47566`) con un bug real de Clikalo — pendiente, requiere SISPRO local corriendo + una API key real.
-- [ ] Crear repo privado en GitHub y push inicial (`gh repo create sispro-bug-agent --private --source=. --push`) — pendiente, accion visible/externa, no se ejecuta sin confirmacion explicita.
+- [x] Prueba manual end-to-end contra SISPRO local (`http://localhost:47566`) con un bug real de Clikalo — `sispro-list-bugs.sh` trajo correctamente los 2 bugs abiertos de PRODYNAMICS-CLIKALO (idProyecto 246). `sispro-report-time.sh` NO se probo contra un bug real (accion irreversible, mueve a Revision + manda correo) — queda para cuando se atienda un bug real por el flujo completo.
+- [x] Crear repo privado en GitHub y push inicial — https://github.com/gvelaxzquez/sispro-bug-agent
 
 ## Notas de implementacion
 
