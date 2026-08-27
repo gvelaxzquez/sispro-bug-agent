@@ -1,0 +1,8 @@
+{
+  "name": "sispro-bug-agent",
+  "description": "Agente que consulta bugs asignados en SISPRO y los atiende con gates de aprobacion (elegir bug, aprobar plan, aprobar reporte final).",
+  "version": "1.0.0",
+  "author": { "name": "Gerardo Salvador Velazquez Medina" },
+  "repository": "sispro-bug-agent",
+  "license": "MIT"
+}
