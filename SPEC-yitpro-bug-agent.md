@@ -160,4 +160,4 @@ GitHub deja un redirect automatico de la URL vieja a la nueva (para clones y
 - [x] `.gitignore` del plugin → ignora `.yitpro.env` (ya no `config/sispro.env`)
 - [x] `README.md` → instrucciones v2 completas + seccion "Migrando de sispro-bug-agent"
 - [x] En el repo Clikalo: se borro `config/sispro.env` viejo y se actualizo `.gitignore` de Clikalo (`config/sispro.env` → `.yitpro.env`). Pendiente crear el `.yitpro.env` real ahi con `YITPRO_PROJECT`/`YITPRO_REPOSITORY` reales — requiere que el usuario lo descargue del wizard del Dashboard o de los valores reales (no inventados por el agente).
-- [ ] Prueba manual end-to-end v2 contra YITPRO local — pendiente de `.yitpro.env` real en Clikalo (ver punto anterior).
+- [x] Prueba manual end-to-end v2 — `.yitpro.env` real ya en la raiz de Clikalo. `yitpro-list-bugs.sh` confirmado contra YITPRO real: trae `Clave` (`PRODX05`), sin `Repositorios[]` (correcto, ya no lo expone el endpoint). Ciclo completo de commit+reporte (Paso 7) aun no probado con un bug real — pendiente para cuando se cierre uno.
