@@ -14,6 +14,17 @@
 > reporte (perdida de `ProfilePicturePath` en updates sin foto nueva, y
 > cache-by-URL sin invalidar tras el update) — el gate 2 ahora deja explicito
 > que "un bug" puede requerir documentar mas de una causa.
+>
+> v2.2 — el spec de cada bug (`mds/bugfix/<IdActividad>.md`) suma una
+> `## Matriz de pruebas de validacion` obligatoria (tabla caso/pasos/
+> resultado esperado/estado, arrancando en `Pendiente`) — la checklist que
+> QA corre para validar el fix en vivo, no solo la nota de que build/typecheck
+> pasaron. Nace de atender el batch de bugs de Zonas
+> (`mds/bugfix/361956-361962-zonas.md`, un solo spec/commit para 6
+> `IdActividad` relacionados) — patron tambien documentado aqui: cuando
+> varios bugs comparten modulo y causa, un solo spec+commit los cubre, pero
+> `ReportarTiempo` sigue siendo una llamada por `IdActividad` (reusando el
+> mismo `IdLink`).
 
 ## Proposito
 

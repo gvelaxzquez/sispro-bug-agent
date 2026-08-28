@@ -1,7 +1,7 @@
 {
   "name": "yitpro-bug-agent",
   "description": "Agente que consulta bugs asignados en YITPRO y los atiende con gates de aprobacion (elegir bug, aprobar plan, aprobar commit+reporte final).",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "author": { "name": "Gerardo Salvador Velazquez Medina" },
   "repository": "yitpro-bug-agent",
   "license": "MIT"

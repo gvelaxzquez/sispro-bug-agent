@@ -31,6 +31,8 @@ bash scripts/yitpro-list-bugs.sh
 
 Pregunta al usuario (usa `AskUserQuestion` si son pocos bugs, listalos como opciones con el BR como label) cual `IdActividad` quiere atacar. No elijas tu el de mayor prioridad sin preguntar. Si el usuario dice "el mas prioritario" o similar, confirma cual es antes de seguir (prioridad mas baja en el numero = mas urgente, segun el instructivo: `Prioridad: 0` es la mas alta).
 
+**Batch explicito**: si el usuario pide atender varios bugs juntos (mismo modulo, causa compartida — ver `mds/bugfix/361956-361962-zonas.md` como ejemplo real), no lo decidas tu solo: es valido solo cuando el usuario lo pide o lo confirma. En ese caso, los pasos 3-5 cubren todos los bugs juntos, el spec del Paso 4 es UNO solo nombrado `mds/bugfix/<primerId>-<ultimoId>-<slug>.md` (o listando todos los ids si no son consecutivos) cubriendo todos, y el commit del Paso 7 tambien es uno solo — pero el Paso 7.4 (`yitpro-report-time.sh`) sigue siendo **una llamada por cada `IdActividad`**, todas reusando el mismo `IdLink` (mismo commit).
+
 ## Paso 3 — Analizar el bug
 
 Toma el campo `Markdown` del bug elegido. Leelo como el spec del bug (titulo, descripcion, criterios de aceptacion/pasos, evidencias). Si algo esta ambiguo — no dice que pantalla/endpoint, falta criterio de exito claro, contradice lo que ves en el codigo del repo actual — pregunta al usuario ANTES de proponer nada, igual que el flujo de preguntas de un spec normal. No asumas.
@@ -52,6 +54,7 @@ Con el plan aprobado, **antes de tocar codigo**, escribe `mds/bugfix/<IdActivida
 - Analisis (lo que encontraste explorando el codigo — causa raiz, por que pasa).
 - El plan aprobado en este mismo gate (lo que se va a cambiar y por que).
 - Una seccion `## Solucion implementada` vacia/pendiente — se llena en el Paso 7.
+- Una seccion `## Matriz de pruebas de validacion` vacia/pendiente — se llena en el Paso 7, junto con la anterior.
 
 Este archivo es el spec del fix, igual que cualquier spec de este repo — se escribe ANTES de implementar, no como changelog despues del hecho.
 
@@ -74,7 +77,7 @@ Pide confirmacion explicita de TODO el bloque junto. Si el usuario corrige el me
 
 Con el OK del Gate 3:
 
-1. Llena la seccion `## Solucion implementada` de `mds/bugfix/<IdActividad>.md` (Paso 4) con: archivos tocados y que cambio cada uno, y si se corrio/paso build o tests (o si no se pudo verificar en vivo — decilo explicito, no lo omitas).
+1. Llena la seccion `## Solucion implementada` de `mds/bugfix/<IdActividad>.md` (Paso 4) con: archivos tocados y que cambio cada uno, y si se corrio/paso build o tests (o si no se pudo verificar en vivo — decilo explicito, no lo omitas). Agrega tambien una seccion `## Matriz de pruebas de validacion` — tabla `# | Bug/Caso | Pasos | Resultado esperado | Estado`, una fila por escenario relevante del fix (cada criterio de aceptacion del reporte original, casos limite tocados por el approach, y al menos un caso de regresion de algo que NO deberia haber cambiado). Estado siempre arranca en `Pendiente` — vos no marcas nada como pasado a menos que hayas verificado en vivo en un navegador/entorno real (build/typecheck limpio NO cuenta como "Pendiente" resuelto, es un piso minimo, no la prueba). Esta matriz es la checklist que QA corre para validar el fix, no un adorno — sin ella el spec queda incompleto.
 2. Si hay cambios sin commitear: revisa `git status`/`git diff` (nunca `git add -A` ciego), stagea lo relevante **junto con `mds/bugfix/<IdActividad>.md`** — el spec del fix va SIEMPRE en el mismo commit que el codigo que soluciona, nunca separado — y corre `git commit` con el mensaje aprobado en el Paso 6.
 3. Captura el hash: `git rev-parse HEAD` → hash completo de 40 caracteres (ej. `45175419aa4e36e7d1c6fec05610621343d77b1e`). **Eso exacto va en `IdLink`** — el hash crudo, no una URL de Azure/GitHub.
    - Nota: si el bug ya estaba resuelto por un commit previo (Paso 4/5), usa el hash de ESE commit en vez de crear uno nuevo — no inventes un commit vacio solo para tener un `IdLink`.
