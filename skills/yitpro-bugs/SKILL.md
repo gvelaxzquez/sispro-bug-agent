@@ -40,11 +40,20 @@ Explora el codigo del repo actual para ubicar la causa probable (grep/read, no a
 ## Paso 4 — Gate 2: aprobar el plan
 
 Antes de escribir o modificar una sola linea de codigo, muestra un resumen corto:
-- Causa raiz sospechada (o "ya cubierto por X" si aplica).
+- Causa raiz sospechada (o "ya cubierto por X" si aplica — puede haber mas de una causa/bug distinto en el mismo reporte, no asumas que es uno solo).
 - Archivos que vas a tocar (o ninguno, si ya esta resuelto).
 - Approach (que vas a cambiar y por que).
 
 Pide confirmacion explicita. Si el usuario corrige el approach, ajusta y vuelve a mostrar el resumen — no implementes hasta el OK explicito. Este gate es igual de estricto que el flujo obligatorio de specs: sin aprobacion, no hay codigo.
+
+Con el plan aprobado, **antes de tocar codigo**, escribe `mds/bugfix/<IdActividad>.md` en la raiz del repo destino (crea `mds/bugfix/` si no existe) con:
+- Encabezado: IdActividad, proyecto (`YITPRO_PROJECT`), prioridad, fecha asignado.
+- El reporte original (el `Markdown` del bug tal cual, en blockquote).
+- Analisis (lo que encontraste explorando el codigo — causa raiz, por que pasa).
+- El plan aprobado en este mismo gate (lo que se va a cambiar y por que).
+- Una seccion `## Solucion implementada` vacia/pendiente — se llena en el Paso 7.
+
+Este archivo es el spec del fix, igual que cualquier spec de este repo — se escribe ANTES de implementar, no como changelog despues del hecho.
 
 ## Paso 5 — Implementar
 
@@ -54,7 +63,7 @@ Con el plan aprobado, haz el fix en el repo actual (si aplica — puede que el P
 
 YITPRO liga el commit al bug en la misma llamada que reporta tiempo — no son pasos separados. Antes de ejecutar nada irreversible, muestra en un solo bloque:
 
-1. **Mensaje de commit propuesto** — sigue las convenciones de commit del repo destino (revisa su `CLAUDE.md`). Si no hay nada que commitear porque el bug ya estaba resuelto, dilo explicitamente y salta a reusar el commit existente como `IdLink` (ver Paso 7, nota).
+1. **Mensaje de commit propuesto** — sigue las convenciones de commit del repo destino (revisa su `CLAUDE.md`). Debe mencionar el spec (`mds/bugfix/<IdActividad>.md`). Si no hay nada que commitear porque el bug ya estaba resuelto, dilo explicitamente y salta a reusar el commit existente como `IdLink` (ver Paso 7, nota) — igual escribe/actualiza el `.md` del bugfix y comitealo aparte si aplica.
 2. **`Tiempo`** — pregunta al usuario las horas reales invertidas. No lo inventes ni lo estimes tu solo.
 3. **`Comentario`** — propuesta corta para la bitacora, el usuario puede ajustarla.
 4. **`DescripcionCommit`** — si el usuario no da una distinta, usa el subject del commit que se va a hacer (no un valor generico tipo "fix").
@@ -65,15 +74,16 @@ Pide confirmacion explicita de TODO el bloque junto. Si el usuario corrige el me
 
 Con el OK del Gate 3:
 
-1. Si hay cambios sin commitear: revisa `git status`/`git diff` (nunca `git add -A` ciego), stagea lo relevante, y corre `git commit` con el mensaje aprobado en el Paso 6.
-2. Captura el hash: `git rev-parse HEAD` → hash completo de 40 caracteres (ej. `45175419aa4e36e7d1c6fec05610621343d77b1e`). **Eso exacto va en `IdLink`** — el hash crudo, no una URL de Azure/GitHub.
+1. Llena la seccion `## Solucion implementada` de `mds/bugfix/<IdActividad>.md` (Paso 4) con: archivos tocados y que cambio cada uno, y si se corrio/paso build o tests (o si no se pudo verificar en vivo — decilo explicito, no lo omitas).
+2. Si hay cambios sin commitear: revisa `git status`/`git diff` (nunca `git add -A` ciego), stagea lo relevante **junto con `mds/bugfix/<IdActividad>.md`** — el spec del fix va SIEMPRE en el mismo commit que el codigo que soluciona, nunca separado — y corre `git commit` con el mensaje aprobado en el Paso 6.
+3. Captura el hash: `git rev-parse HEAD` → hash completo de 40 caracteres (ej. `45175419aa4e36e7d1c6fec05610621343d77b1e`). **Eso exacto va en `IdLink`** — el hash crudo, no una URL de Azure/GitHub.
    - Nota: si el bug ya estaba resuelto por un commit previo (Paso 4/5), usa el hash de ESE commit en vez de crear uno nuevo — no inventes un commit vacio solo para tener un `IdLink`.
-3. Corre:
+4. Corre:
    ```
    bash scripts/yitpro-report-time.sh <IdActividad> <Tiempo> <IdLink> "<Comentario>" "<DescripcionCommit>"
    ```
    El script arma `NombreRepositorio` internamente desde `YITPRO_REPOSITORY` (config) — no lo pases como argumento.
-4. Maneja la respuesta:
+5. Maneja la respuesta:
    - Exito (200, `Exito: true`) → confirma al usuario, menciona que el bug ya esta en Revision.
    - `400` (Tiempo invalido) → el script ya valida `> 0` antes de llamar.
    - `400` (`NombreRepositorio`/`IdLink` faltante) → no deberia pasar, el script siempre los manda; si pasa, es bug del plugin, reporta el error tal cual, no reintentes ciego.

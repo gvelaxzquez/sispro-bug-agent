@@ -5,6 +5,15 @@
 > (endpoints con `Clave`/`Repositorios`, `ReportarTiempo` ahora liga commit).
 > El repo de GitHub se renombra in-place (`gh repo rename`), no se crea uno
 > nuevo — conserva historial/estrellas, GitHub redirige la URL vieja solo.
+>
+> v2.1 — cada bug atendido escribe su propio spec en
+> `mds/bugfix/<IdActividad>.md` del repo destino (causa raiz, plan aprobado
+> en el gate 2, solucion implementada), commiteado SIEMPRE junto con el
+> codigo que lo resuelve, nunca en un commit separado. Nace de atender el
+> bug real 361937: resulto tener dos causas raiz distintas en el mismo
+> reporte (perdida de `ProfilePicturePath` en updates sin foto nueva, y
+> cache-by-URL sin invalidar tras el update) — el gate 2 ahora deja explicito
+> que "un bug" puede requerir documentar mas de una causa.
 
 ## Proposito
 
@@ -67,24 +76,25 @@ Invocacion: `/yitpro-bugs`, sin argumentos — `YITPRO_PROJECT`/`YITPRO_REPOSITO
 1. **Listar**: corre `scripts/yitpro-list-bugs.sh` (usa `YITPRO_PROJECT` como query param `proyecto`), parsea el JSON, muestra tabla resumen (BR / IdActividad / Prioridad / FechaAsignado) del proyecto configurado. Si `Proyectos` viene vacio, informa "sin bugs abiertos" y termina. Sin validacion cruzada de `YITPRO_REPOSITORY` contra la API — `ConsultarBugs` ya no trae `Repositorios[]`, `.yitpro.env` es la unica fuente de verdad para ese valor (si esta mal, el 400 sale hasta el gate 3/paso 7, no antes).
 2. **Gate 1 — elegir bug**: igual que v1, pregunta cual `IdActividad` atacar. No elige solo.
 3. **Analizar**: igual que v1 — lee el `Markdown`, pregunta lo que falte, explora el repo actual antes de proponer nada.
-4. **Gate 2 — mini-plan**: igual que v1 — causa raiz, archivos a tocar, approach. Sin aprobacion explicita, no hay codigo.
-5. **Implementar**: igual que v1 — fix en el repo actual, respetando las convenciones/CLAUDE.md de ESE repo, corre build/tests si existen.
-6. **Gate 3 — aprobar cierre (commit + tiempo + reporte, TODO junto)**: cambia respecto a v1. Antes de ejecutar nada irreversible, muestra en un solo bloque:
-   - El **mensaje de commit propuesto** (convenciones del repo destino — para Clikalo, ver reglas de `git commit` en su `CLAUDE.md`: nunca sin pedir, y este gate ES el pedido explicito para este commit puntual).
+4. **Gate 2 — mini-plan**: causa raiz sospechada (puede haber mas de una en el mismo reporte, ver `mds/bugfix/361937.md` como ejemplo real de un bug con dos causas), archivos a tocar, approach. Sin aprobacion explicita, no hay codigo. **v2.1**: con el plan aprobado y ANTES de tocar codigo, escribe `mds/bugfix/<IdActividad>.md` en la raiz del repo destino (crea `mds/bugfix/` si no existe) con el reporte original, el analisis y el plan aprobado — el spec del fix, escrito como cualquier spec de este repo, no como changelog posterior.
+5. **Implementar**: fix en el repo actual, respetando las convenciones/CLAUDE.md de ESE repo, corre build/tests si existen.
+6. **Gate 3 — aprobar cierre (commit + tiempo + reporte, TODO junto)**: antes de ejecutar nada irreversible, muestra en un solo bloque:
+   - El **mensaje de commit propuesto** (convenciones del repo destino — para Clikalo, ver reglas de `git commit` en su `CLAUDE.md`: nunca sin pedir, y este gate ES el pedido explicito para este commit puntual). Debe referenciar `mds/bugfix/<IdActividad>.md`.
    - El **`Tiempo`** — pregunta al usuario las horas reales invertidas, no lo inventa.
    - El **`Comentario`** propuesto para la bitacora (el usuario puede ajustarlo).
    - La **`DescripcionCommit`** — si el usuario no da una distinta, usa el subject del commit que se va a hacer (no un valor generico).
 
    Pide confirmacion explicita de TODO el bloque junto. Si el usuario corrige el mensaje de commit, el tiempo, o el comentario, ajusta y vuelve a mostrar — no ejecuta hasta el OK.
 7. **Cerrar**: con el OK del gate 3:
-   1. `git commit` en el repo actual con el mensaje aprobado (staging igual que cualquier commit normal — revisar `git status`/`git diff` antes, mismas reglas de higiene que el resto del flujo de Claude Code: no `git add -A` ciego).
-   2. Captura el hash: `git rev-parse HEAD` → hash completo de 40 caracteres (ej. `45175419aa4e36e7d1c6fec05610621343d77b1e`) — **eso exacto es lo que va en `IdLink`**, no un link de Azure/URL, el hash crudo.
-   3. Corre:
+   1. Llena `## Solucion implementada` en `mds/bugfix/<IdActividad>.md` (archivos tocados, que cambio cada uno, si se corrio build/tests o si no se pudo verificar en vivo — decirlo explicito).
+   2. `git commit` en el repo actual con el mensaje aprobado, **incluyendo `mds/bugfix/<IdActividad>.md` en el mismo commit que el codigo** (staging igual que cualquier commit normal — revisar `git status`/`git diff` antes, mismas reglas de higiene que el resto del flujo de Claude Code: no `git add -A` ciego; el spec nunca va en un commit separado del fix).
+   3. Captura el hash: `git rev-parse HEAD` → hash completo de 40 caracteres (ej. `45175419aa4e36e7d1c6fec05610621343d77b1e`) — **eso exacto es lo que va en `IdLink`**, no un link de Azure/URL, el hash crudo.
+   4. Corre:
       ```
       scripts/yitpro-report-time.sh <IdActividad> <Tiempo> <IdLink> ["Comentario"] ["DescripcionCommit"]
       ```
       El script arma el body con `NombreRepositorio` sacado de `YITPRO_REPOSITORY` (config), no como argumento.
-   4. Muestra el resultado (`Exito`/`Mensaje`, o el error tal cual).
+   5. Muestra el resultado (`Exito`/`Mensaje`, o el error tal cual).
 
 ### Manejo de errores de la API
 
