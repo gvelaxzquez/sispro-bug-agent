@@ -9,6 +9,8 @@ Flujo para atender bugs asignados en YITPRO desde Claude Code, con aprobacion hu
 
 Los scripts de este plugin (`scripts/yitpro-list-bugs.sh`, `scripts/yitpro-report-time.sh`) leen `.yitpro.env` **en la raiz del directorio de trabajo actual**, es decir del repo del proyecto, no del plugin.
 
+**Convencion de ruta fija**: todo `.md` de atencion de bugs de este flujo va SIEMPRE en `mds/bugfix/` del repo destino — nunca en `mds/target/` ni ninguna otra carpeta de specs que el repo destino pueda tener (ej. `mds/target/` es para specs de features nuevas, no para bugfixes). Si el repo no tiene `mds/bugfix/` todavia, creala.
+
 ## Paso 0 — Validar config
 
 `scripts/yitpro-list-bugs.sh` ya valida esto solo, pero si el usuario claramente no tiene `.yitpro.env` en la raiz del repo actual, dile que lo descargue del wizard en su Dashboard YITPRO ("Agente IA de Bugs" → Paso 3, ya viene lleno) o copie `.yitpro.env.example` (viene en este plugin) a `.yitpro.env` en la raiz de SU repo y llene `YITPRO_BASE_URL`, `YITPRO_API_KEY`, `YITPRO_PROJECT`, `YITPRO_REPOSITORY`. No sigas hasta que exista.
@@ -67,18 +69,26 @@ Con el plan aprobado, haz el fix en el repo actual (si aplica — puede que el P
 YITPRO liga el commit al bug en la misma llamada que reporta tiempo — no son pasos separados. Antes de ejecutar nada irreversible, muestra en un solo bloque:
 
 1. **Mensaje de commit propuesto** — sigue las convenciones de commit del repo destino (revisa su `CLAUDE.md`). Debe mencionar el spec (`mds/bugfix/<IdActividad>.md`). Si no hay nada que commitear porque el bug ya estaba resuelto, dilo explicitamente y salta a reusar el commit existente como `IdLink` (ver Paso 7, nota) — igual escribe/actualiza el `.md` del bugfix y comitealo aparte si aplica.
-2. **`Tiempo`** — pregunta al usuario las horas reales invertidas. No lo inventes ni lo estimes tu solo.
+2. **`Tiempo`** — calculalo del transcript de la sesion actual (`~/.claude/projects/<slug-del-cwd>/<session-id>.jsonl`, un `.jsonl` por linea con campo `"timestamp"`): toma el primer y el ultimo timestamp del archivo y resta para obtener el wall-clock de la sesion. Convierte a horas, redondea a un valor razonable (ej. 0.25h), y **propon ese numero al usuario junto con el resto del bloque del Gate 3** — nunca lo mandes sin que el usuario lo vea primero. Aclara que es tiempo de reloj del transcript (incluye pausas/esperas, no solo tipeo activo), no una medicion de esfuerzo real. El usuario puede aprobarlo tal cual o dar otro numero — lo que diga el usuario manda. Si no encontras el archivo del transcript (ruta distinta, entorno donde no aplica), cae al comportamiento anterior: pregunta directamente. Nunca inventes un numero sin base (ni del transcript ni del usuario).
 3. **`Comentario`** — propuesta corta para la bitacora, el usuario puede ajustarla.
 4. **`DescripcionCommit`** — si el usuario no da una distinta, usa el subject del commit que se va a hacer (no un valor generico tipo "fix").
 
 Pide confirmacion explicita de TODO el bloque junto. Si el usuario corrige el mensaje de commit, el tiempo, o el comentario, ajusta y vuelve a mostrar — no ejecutes nada hasta el OK.
+
+**`Tiempo` cuando hay varias tareas en la misma sesion**: si en esta sesion se atendio mas de un `IdActividad` (sea batch explicito del Paso 2 o varios bugs separados uno tras otro), el `Tiempo` de cada uno es el wall-clock total de la sesion (calculado como arriba) **prorrateado** (dividido) entre el numero de tareas que se van a cargar — nunca el tiempo completo de la sesion repetido en cada llamada. Propon esa division junto con el total al usuario en el mismo bloque del Gate 3; si pide una distribucion distinta a partes iguales (ej. un bug se llevo mas tiempo que otro), usa esa.
+
+**Gate de commit — nunca automatico aunque el Gate 3 ya se haya aprobado**: no ejecutes `git commit` (Paso 7.2) hasta que se cumplan LAS DOS condiciones:
+1. La `## Matriz de pruebas de validacion` del `.md` esta 100% en `check` (o el usuario confirma explicitamente cada fila que no se pudo marcar `check` y por que, ej. no aplica) — ninguna fila en `Pendiente`, `semicheck`, `uncheck` ni similar.
+2. El usuario dio instruccion explicita de commitear AHORA (ej. "ya quedó", "commitea", "dale") — la aprobacion del Gate 3 (mensaje/tiempo/comentario) NO es por si sola instruccion de commitear si la matriz sigue pendiente.
+
+Si el usuario corre las pruebas y encuentra hallazgos (filas `semicheck`/`uncheck` con nota de lo que fallo), arregla el codigo, actualiza la fila con "fix aplicado, pendiente reverificar" (nunca la marques `check` vos mismo sin haber verificado en vivo) y espera a que el usuario vuelva a probar. Si mientras tanto ya habias hecho un commit (ej. por corregir el flujo de una sesion anterior), deshazlo (`git reset --soft`, nunca `--hard`) antes de seguir — no dejes un commit con la matriz incompleta.
 
 ## Paso 7 — Cerrar
 
 Con el OK del Gate 3:
 
 1. Llena la seccion `## Solucion implementada` de `mds/bugfix/<IdActividad>.md` (Paso 4) con: archivos tocados y que cambio cada uno, y si se corrio/paso build o tests (o si no se pudo verificar en vivo — decilo explicito, no lo omitas). Agrega tambien una seccion `## Matriz de pruebas de validacion` — tabla `# | Bug/Caso | Pasos | Resultado esperado | Estado`, una fila por escenario relevante del fix (cada criterio de aceptacion del reporte original, casos limite tocados por el approach, y al menos un caso de regresion de algo que NO deberia haber cambiado). Estado siempre arranca en `Pendiente` — vos no marcas nada como pasado a menos que hayas verificado en vivo en un navegador/entorno real (build/typecheck limpio NO cuenta como "Pendiente" resuelto, es un piso minimo, no la prueba). Esta matriz es la checklist que QA corre para validar el fix, no un adorno — sin ella el spec queda incompleto.
-2. Si hay cambios sin commitear: revisa `git status`/`git diff` (nunca `git add -A` ciego), stagea lo relevante **junto con `mds/bugfix/<IdActividad>.md`** — el spec del fix va SIEMPRE en el mismo commit que el codigo que soluciona, nunca separado — y corre `git commit` con el mensaje aprobado en el Paso 6.
+2. Si hay cambios sin commitear: revisa `git status`/`git diff` (nunca `git add -A` ciego), stagea lo relevante **junto con `mds/bugfix/<IdActividad>.md`** — el spec del fix va SIEMPRE en el mismo commit que el codigo que soluciona, nunca separado — y corre `git commit` con el mensaje aprobado en el Paso 6. **Antes de este commit aplica el "Gate de commit" del Paso 6** — matriz 100% `check` + instruccion explicita de commitear ahora. Si la matriz recien se acaba de escribir (todo en `Pendiente`), este paso 7.2 espera: no hay commit todavia, se vuelve a este punto cuando el usuario confirme.
 3. Captura el hash: `git rev-parse HEAD` → hash completo de 40 caracteres (ej. `45175419aa4e36e7d1c6fec05610621343d77b1e`). **Eso exacto va en `IdLink`** — el hash crudo, no una URL de Azure/GitHub.
    - Nota: si el bug ya estaba resuelto por un commit previo (Paso 4/5), usa el hash de ESE commit en vez de crear uno nuevo — no inventes un commit vacio solo para tener un `IdLink`.
 4. Corre:
