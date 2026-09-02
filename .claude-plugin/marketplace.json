@@ -1,0 +1,12 @@
+{
+  "name": "yitpro-bug-agent",
+  "owner": {
+    "name": "gvelaxzquez"
+  },
+  "plugins": [
+    {
+      "name": "yitpro-bug-agent",
+      "source": "./"
+    }
+  ]
+}
